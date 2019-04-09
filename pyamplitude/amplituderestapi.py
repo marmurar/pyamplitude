@@ -626,7 +626,7 @@ class AmplitudeRestApi(object):
         + end + '&i=' + str(interval)
 
         if segment_definitions is not None:
-            url += '&s=' + str(segment_definitions)
+            url += '&s=' + '[' + ', '.join([str(_s)[1:-1] for _s in segment_definitions])+ ']'
 
         if group_by is not None:
             for prop in group_by:
