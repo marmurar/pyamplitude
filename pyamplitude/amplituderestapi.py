@@ -185,6 +185,11 @@ class AmplitudeRestApi(object):
         total_query_cost = number_of_days * cost_for_query_type * number_of_conditions
 
         return total_query_cost
+    
+    def _segments_definition_str(self,
+                                 segment_definitions):
+        """Get str representation of segment definitions list """
+        return '[' + ', '.join([str(s)[1:-1] for s in segment_definitions]) + ']'
 
     def get_active_and_new_user_count(self,
                                       start,
@@ -235,7 +240,7 @@ class AmplitudeRestApi(object):
         url = self.api_url + endpoint + '?start=' + start + '&end=' + end + '&m=' + m + '&i=' + str(interval)
 
         if segment_definitions is not None:
-            url += '&s=' + str(segment_definitions)
+            url += '&s=' + self._segments_definition_str(segment_definitions)
 
         if group_by is not None:
             for prop in group_by:
@@ -626,7 +631,7 @@ class AmplitudeRestApi(object):
         + end + '&i=' + str(interval)
 
         if segment_definitions is not None:
-            url += '&s=' + '[' + ', '.join([str(_s)[1:-1] for _s in segment_definitions])+ ']'
+            url += '&s=' + self._segments_definition_str(segment_definitions)
 
         if group_by is not None:
             for prop in group_by:
@@ -708,7 +713,7 @@ class AmplitudeRestApi(object):
         + end + '&i=' + str(interval)
 
         if segment_definitions is not None:
-            url += '&s=' + str(segment_definitions)
+            url += '&s=' + self._segments_definition_str(segment_definitions)
 
         if group_by is not None:
             for prop in group_by:
