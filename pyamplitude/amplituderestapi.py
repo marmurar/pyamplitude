@@ -107,11 +107,13 @@ class AmplitudeRestApi(object):
 
         return number_of_conditions
 
-    def _make_request(self, url):
+    def _make_request(self, url, params=None):
         """ Each AmplitudeRestAPI method return data by using _make_request"""
         try:
-            response = requests.get(url, auth=(self.project_handler.api_key,
-                                               self.project_handler.secret_key))
+            response = requests.get(url,
+                                    params=params,
+                                    auth=(self.project_handler.api_key,
+                                          self.project_handler.secret_key))
 
             error_message = 'Pyamplitude Error: '  + str(response.text)
 
@@ -237,16 +239,17 @@ class AmplitudeRestApi(object):
 
             print("Calculated query cost: " , query_cost)
 
-        url = self.api_url + endpoint + '?start=' + start + '&end=' + end + '&m=' + m + '&i=' + str(interval)
+        url = self.api_url + endpoint
+        params = [('start', start), ('end', end), ('m', m), ('i', str(interval))]
 
         if segment_definitions is not None:
-            url += '&s=' + self._segments_definition_str(segment_definitions)
+            params.append(('s', self._segments_definition_str(segment_definitions)))
 
         if group_by is not None:
             for prop in group_by:
-                url += '&g=' + str(prop)
+                params.append(('g', str(prop)))
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -266,8 +269,10 @@ class AmplitudeRestApi(object):
 
         endpoint = 'sessions'
 
-        url = self.api_url + endpoint + '/length' + '?start=' + start + '&end=' + end
+        url = self.api_url + endpoint + '/length'
+        params = [('start', start), ('end', end)]
 
+        
         if not self._check_date_parameters(start=start, end=end):
            raise ValueError('Pyamplitude Error: Check start & end date parameters...')
 
@@ -280,7 +285,7 @@ class AmplitudeRestApi(object):
 
             print("Calculated query cost: " , query_cost)
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -292,7 +297,8 @@ class AmplitudeRestApi(object):
 
         endpoint = 'sessions'
 
-        url = self.api_url + endpoint + '/average?start=' + start + '&end=' + end
+        url = self.api_url + endpoint + '/average'
+        params = [('start', start), ('end', end)]
 
         if not self._check_date_parameters(start=start,end=end):
            raise ValueError('Pyamplitude Error:  Wrong date parameters...')
@@ -305,7 +311,7 @@ class AmplitudeRestApi(object):
 
             print("Calculated query cost: " , query_cost)
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -315,7 +321,8 @@ class AmplitudeRestApi(object):
 
         endpoint = 'sessions'
 
-        url = self.api_url + endpoint + '/peruser?start=' + start + '&end=' + end
+        url = self.api_url + endpoint + '/peruser'
+        params = [('start', start), ('end', end)]
 
         if not self._check_date_parameters(start=start,end=end):
            raise ValueError('Pyamplitude Error:  Wrong date parameters...')
@@ -328,7 +335,7 @@ class AmplitudeRestApi(object):
 
             print("Calculated query cost: " , query_cost)
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -366,13 +373,12 @@ class AmplitudeRestApi(object):
             self.logger.exception('Pyamplitude Error: Bad defined property')
 
         endpoint = 'composition'
+        
+        url = self.api_url + endpoint
+        params = [('start', start), ('end', end)]
 
-        aux = 0
-        data = ''
         for x in proper:
-            data += '&p=' + x
-
-        url = self.api_url + endpoint + '?start=' + start + '&end=' + end + data
+            params.append(('p', x))
 
         if self.show_query_cost:
             query_cost = self._calculate_query_cost(start_date = start,
@@ -382,7 +388,7 @@ class AmplitudeRestApi(object):
 
             print("Calculated query cost: " , query_cost)
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -426,7 +432,8 @@ class AmplitudeRestApi(object):
         if mode not in mode_options:
             self.logger.warn('Pyamplitude Error: invalid option for m parameter, options: totals,paying,arpu,arppu')
 
-        url = self.api_url + endpoint + '?e=' + str(events) + '&start=' + start + '&end=' + end + '&m=' + mode + '&i=' + interval
+        url = self.api_url + endpoint
+        params = [('e', str(events), ('start', start), ('end', end), ('m', m), ('i', str(interval))]
 
 
         if self.show_query_cost:
@@ -437,7 +444,7 @@ class AmplitudeRestApi(object):
 
             print("Calculated query cost: " , query_cost)
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -499,9 +506,10 @@ class AmplitudeRestApi(object):
 
             print("Calculated query cost: " , query_cost)
 
-        url = self.api_url + endpoint + '?user=' + user
+        url = self.api_url + endpoint
+        params = [('user', user)]
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -521,9 +529,10 @@ class AmplitudeRestApi(object):
 
         endpoint = 'usersearch'
 
-        url = self.api_url + endpoint + '?user=' + user
+        url = self.api_url + endpoint
+        params = [('user', user)]
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -561,9 +570,10 @@ class AmplitudeRestApi(object):
 
             print("Calculated query cost: " , query_cost)
 
-        url = self.api_url + endpoint + '?i=' + str(interval)
+        url = self.api_url + endpoint
+        params = [('i', str(interval))]
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -627,17 +637,17 @@ class AmplitudeRestApi(object):
 
             print("Calculated query cost: " , query_cost)
 
-        url = self.api_url + endpoint + '/day' + '?m=' + m + '&start=' + start + '&end=' \
-        + end + '&i=' + str(interval)
+        url = self.api_url + endpoint + '/day'
+        params = [('start', start), ('end', end), ('m', m), ('i', str(interval))]
 
         if segment_definitions is not None:
-            url += '&s=' + self._segments_definition_str(segment_definitions)
+            params.append(('s', self._segments_definition_str(segment_definitions)))
 
         if group_by is not None:
             for prop in group_by:
-                url += '&g=' + str(prop)
+                params.append(('g', str(prop)))
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -708,18 +718,17 @@ class AmplitudeRestApi(object):
         self._validate_group_by_clause(segment_definitions, group_by)
         self._validate_segments_definition(segment_definitions)
 
-
-        url = self.api_url + endpoint + '/' + 'ltv?m=' + str(m) + '&start=' + start + '&end=' \
-        + end + '&i=' + str(interval)
+        url = self.api_url + endpoint + '/ltv'
+        params = [('start', start), ('end', end), ('m', m), ('i', str(interval))]
 
         if segment_definitions is not None:
-            url += '&s=' + self._segments_definition_str(segment_definitions)
+            params.append(('s', self._segments_definition_str(segment_definitions)))
 
         if group_by is not None:
             for prop in group_by:
-                url += '&g=' + str(prop)
+                params.append(('g', str(prop)))
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
