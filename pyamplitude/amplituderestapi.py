@@ -433,7 +433,7 @@ class AmplitudeRestApi(object):
             self.logger.warn('Pyamplitude Error: invalid option for m parameter, options: totals,paying,arpu,arppu')
 
         url = self.api_url + endpoint
-        params = [('e', str(events), ('start', start), ('end', end), ('m', m), ('i', str(interval))]
+        params = [('e', str(events)), ('start', start), ('end', end), ('m', m), ('i', str(interval))]
 
 
         if self.show_query_cost:
