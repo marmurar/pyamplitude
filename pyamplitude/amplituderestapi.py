@@ -397,7 +397,8 @@ class AmplitudeRestApi(object):
                    end,
                    event_name=[],
                    mode='totals',
-                   interval='1'):
+                   interval='1',
+                   segment_definitions=[]):
         """ Get totals, uniques, averages, or DAU for multiple events at once.
 
         Args:
@@ -434,13 +435,16 @@ class AmplitudeRestApi(object):
 
         url = self.api_url + endpoint
         params = [('e', str(events)), ('start', start), ('end', end), ('m', m), ('i', str(interval))]
+        
+        if segment_definitions is not None:
+            params.append(('s', self._segments_definition_str(segment_definitions)))
 
 
         if self.show_query_cost:
             query_cost = self._calculate_query_cost(start_date = start,
                                                     end_date   = end,
                                                     endpoint   = endpoint,
-                                                    segment_definitions = None)
+                                                    segment_definitions = segment_definitions
 
             print("Calculated query cost: " , query_cost)
 
