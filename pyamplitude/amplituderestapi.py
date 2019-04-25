@@ -433,7 +433,7 @@ class AmplitudeRestApi(object):
             params.append(('e', str(events[0])))
         elif len(events) == 2:
             params.append(('e', str(events[0])))
-            params.append(('e2', str(events[1]))                      
+            params.append(('e2', str(events[1])))                      
         else:
             raise ValueError('Pyamplitude Error: get_events:Wrong number of events')
         
