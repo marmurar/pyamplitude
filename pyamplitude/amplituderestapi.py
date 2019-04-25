@@ -83,7 +83,7 @@ class AmplitudeRestApi(object):
         """ Calculates cost for the query type: Different chart types will have
         different costs. For all other endpoints not listed below, the cost is 1."""
 
-        endpoints_costs = {'segmentation':1, 'funnels':2,
+        endpoints_costs = {'events/segmentation':1, 'funnels':2,
                            'retention':8, 'users':4}
 
         if endpoint not in endpoints_costs.keys():
@@ -93,7 +93,7 @@ class AmplitudeRestApi(object):
 
         return endpoints_costs
 
-    def _calculate_number_of_conditions(self, segment_definitions):
+    def _calculate_number_of_conditions(self, segment_definitions, group_by=None):
         """ # of conditions: This is the number of segments + the number of
             conditions within the segments applied to the chart you are looking at.
             In addition, each group by will count as 4 segments. For example, the
@@ -108,6 +108,16 @@ class AmplitudeRestApi(object):
             number_of_conditions = 1
         else:
             number_of_conditions = len(segment_definitions)
+            
+        if segment_definitions is not None:
+            for s in segment_definitions:
+                number_of_conditions += s.filter_count()
+                
+        if group_by is not None:
+            if isinstance(group_by, (list,)):
+                number_of_conditions += (4 * len(group_by))
+            else:
+                number_of_conditions += 4
 
         return number_of_conditions
 
@@ -136,7 +146,7 @@ class AmplitudeRestApi(object):
     def _validate_group_by_clause(self, segment_definitions, group_by):
         """ Group by clause validation """
         if group_by is not None:
-            if segment_definitions == None:
+            if (segment_definitions == None) or (len(segment_definitions) == 0):
                 raise ValueError('Pyamplitude Error: Impossible to group by data without a segment definition')
             for prop in group_by:
                 valid = False
@@ -168,7 +178,8 @@ class AmplitudeRestApi(object):
                               start_date,
                               end_date,
                               endpoint,
-                              segment_definitions):
+                              segment_definitions,
+                              group_by = None):
         """ Calculate your query cost for each endpoint.
 
         The User Activity and User Search endpoints have a different concurrent
@@ -185,7 +196,7 @@ class AmplitudeRestApi(object):
         cost = (# of days) * (# of conditions) * (cost for the query type)
         """
         number_of_days       = self._calculate_number_of_days(start_date,end_date)
-        number_of_conditions = self._calculate_number_of_conditions(segment_definitions)
+        number_of_conditions = self._calculate_number_of_conditions(segment_definitions, group_by)
         cost_for_query_type  = self._calculate_cost_for_query_type(endpoint)
 
         total_query_cost = number_of_days * cost_for_query_type * number_of_conditions
@@ -239,7 +250,8 @@ class AmplitudeRestApi(object):
             query_cost = self._calculate_query_cost(start_date          = start,
                                                     end_date            = end,
                                                     endpoint            = endpoint,
-                                                    segment_definitions = segment_definitions)
+                                                    segment_definitions = segment_definitions,
+                                                    group_by            = group_by)
 
             print("Calculated query cost: " , query_cost)
 
@@ -450,6 +462,7 @@ class AmplitudeRestApi(object):
                                                     end_date   = end,
                                                     endpoint   = endpoint,
                                                     segment_definitions = segment_definitions)
+            query_cost = query_cost * len(events)
 
             print("Calculated query cost: " , query_cost)
 
@@ -642,7 +655,8 @@ class AmplitudeRestApi(object):
             query_cost = self._calculate_query_cost(start_date = start,
                                                     end_date   = end,
                                                     endpoint   = endpoint,
-                                                    segment_definitions = None)
+                                                    segment_definitions = None,
+                                                    group_by = group_by)
 
             print("Calculated query cost: " , query_cost)
 
@@ -712,7 +726,8 @@ class AmplitudeRestApi(object):
            query_cost = self._calculate_query_cost(start_date = start,
                                                    end_date   = end,
                                                    endpoint   = endpoint,
-                                                   segment_definitions = None)
+                                                   segment_definitions = None,
+                                                   group_by = group_by)
 
            print("Calculated query cost: ", query_cost)
 
@@ -816,7 +831,8 @@ class AmplitudeRestApi(object):
             query_cost = self._calculate_query_cost(start_date = start,
                                                     end_date   = end,
                                                     endpoint   = endpoint,
-                                                    segment_definitions = segment_definitions)
+                                                    segment_definitions = segment_definitions,
+                                                    group_by = group_by)
 
             print("Calculated query cost: " , query_cost)
 
@@ -887,7 +903,9 @@ class AmplitudeRestApi(object):
             query_cost = self._calculate_query_cost(start_date = start,
                                                     end_date   = end,
                                                     endpoint   = endpoint,
-                                                    segment_definitions = segment_definitions)
+                                                    segment_definitions = segment_definitions,
+                                                    group_by = group_by)
+            query_cost = query_cost * len(e)
 
             print("Calculated query cost: " , query_cost)
 
