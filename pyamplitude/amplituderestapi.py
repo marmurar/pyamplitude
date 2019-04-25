@@ -823,6 +823,77 @@ class AmplitudeRestApi(object):
         api_response = self._make_request(url, params)
 
         return api_response
+    
+    def get_funnel(self,
+                   e,
+                   start,
+                   end,
+                   mode='ordered',
+                   n='active',
+                   segment_definitions=[],
+                   group_by=None,
+                   cs=2592000
+                  ):
+        """ Get funnel drop-off and conversion rates.
+        Args:
+                e (required, multiple)	A full event for each step in the funnel.
+                start (required)	First date included in data series,
+                formatted YYYYMMDD (e.g. "20141001").
+                end (required)	Last date included in data series,
+                formatted YYYYMMDD (e.g. "20141004").
+                mode (optional)	Either "unordered" or "ordered" to specify what
+                mode to run the funnel in (default: "ordered").
+                n (optional)	Either "new" or "active" to specify what set of
+                users to consider in the funnel (default: "active").
+                segment_definitions (optional)	Segment definitions (default: none).
+                group_by (optional, up to 1)	The property to group by (default: none).
+                cs (optional)	The conversion window in seconds (default: 2,592,000 -- 30 days).
+                Conversion windows are automatically rounded down to the nearest day in "unordered" mode.
+        """
+        
+        if (len(segment_definitions) == 0) and (group_by is not None):
+            raise ValueError('Pyamplitude Error: Segment_definition & group_by must be defined...')
+            
+        if not self._check_date_parameters(start=start,end=end):
+            raise ValueError('Pyamplitude Error: _check_date_parameters:Wrong date parameters...')
+            
+        if mode not in ["unordered", "ordered"]:
+            error_message = 'Pyamplitude Error: get_funnel: + parameter: mode must be "unordered" or "ordered"'
+            self.logger.error(error_message)
+            raise ValueError(error_message)
+            
+        if n not in ["new", "active"]:
+            error_message = 'Pyamplitude Error: get_funnel: + parameter: n must be "new" or "active"'
+            self.logger.error(error_message)
+            raise ValueError(error_message)
+        
+        self._validate_group_by_clause(segment_definitions, group_by)
+        self._validate_segments_definition(segment_definitions)
+        
+        endpoint = 'funnels'
+        url = self.api_url + endpoint
+        
+        params = [('start', start), ('end', end), ('mode', mode), ('n', n), ('cs', cs)]
+        for event in e:
+            params.append(('e', str(event)))
+        
+        if len(segment_definitions) != 0:
+            params.append(('s', self._segments_definition_str(segment_definitions)))
+
+        if group_by is not None:
+            params.append(('g', str(group_by)))
+
+        if self.show_query_cost:
+            query_cost = self._calculate_query_cost(start_date = start,
+                                                    end_date   = end,
+                                                    endpoint   = endpoint,
+                                                    segment_definitions = segment_definitions)
+
+            print("Calculated query cost: " , query_cost)
+
+        api_response = self._make_request(url, params)
+
+        return api_response
 
     def get_annotations(self):
         """ Get the annotations configured in the app.
