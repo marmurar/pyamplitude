@@ -444,7 +444,7 @@ class AmplitudeRestApi(object):
             query_cost = self._calculate_query_cost(start_date = start,
                                                     end_date   = end,
                                                     endpoint   = endpoint,
-                                                    segment_definitions = segment_definitions
+                                                    segment_definitions = segment_definitions)
 
             print("Calculated query cost: " , query_cost)
 
