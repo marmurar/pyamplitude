@@ -420,7 +420,7 @@ class AmplitudeRestApi(object):
         if not self._check_date_parameters(start=start,end=end):
            raise ValueError('Pyamplitude Error: _check_date_parameters:Wrong date parameters...')
 
-        endpoint = 'events'
+        endpoint = 'events/segmentation'
         mode_options = ['totals','uniques','avg','pct_dau']
 
         if mode not in mode_options:
