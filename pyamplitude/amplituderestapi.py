@@ -434,7 +434,7 @@ class AmplitudeRestApi(object):
             self.logger.warn('Pyamplitude Error: invalid option for m parameter, options: totals,paying,arpu,arppu')
 
         url = self.api_url + endpoint
-        params = [('e', str(events)), ('start', start), ('end', end), ('m', m), ('i', str(interval))]
+        params = [('e', str(events)), ('start', start), ('end', end), ('m', mode), ('i', str(interval))]
         
         if segment_definitions is not None:
             params.append(('s', self._segments_definition_str(segment_definitions)))
