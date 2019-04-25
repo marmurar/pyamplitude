@@ -6,7 +6,7 @@ import logging
 import sys
 import simplejson as json
 from datetime import datetime
-from pyamplitude.apiresources import Segment
+from pyamplitude.apiresources import Segment, Event
 
 
 class AmplitudeRestApi(object):
@@ -395,14 +395,14 @@ class AmplitudeRestApi(object):
     def get_events(self,
                    start,
                    end,
-                   event_name=[],
+                   events=[],
                    mode='totals',
                    interval='1',
                    segment_definitions=[]):
         """ Get totals, uniques, averages, or DAU for multiple events at once.
 
         Args:
-                event_name (required, multiple)	Names of the events to retrieve data for.
+                events (required, multiple)	Events to retrieve data for (max 2).
 
                 mode (optional)	Either "totals", "uniques", "avg", or "pct_dau"
                 to get the desired metric (default: "totals").
@@ -423,18 +423,19 @@ class AmplitudeRestApi(object):
         endpoint = 'events'
         mode_options = ['totals','uniques','avg','pct_dau']
 
-        events = []
-        if len(event_name) == 1:
-            events = str(event_name[0]).replace(' ','%')
-        else:
-            for x in event_name:
-                events.append(str(x).replace(' ','%'))
-
         if mode not in mode_options:
             self.logger.warn('Pyamplitude Error: invalid option for m parameter, options: totals,paying,arpu,arppu')
 
         url = self.api_url + endpoint
-        params = [('e', str(events)), ('start', start), ('end', end), ('m', mode), ('i', str(interval))]
+        params = [('start', start), ('end', end), ('m', mode), ('i', str(interval))]
+        
+        if len(events) == 1:
+            params.append(('e', str(events[0])))
+        elif len(events) == 2:
+            params.append(('e', str(events[0])))
+            params.append(('e2', str(events[1]))                      
+        else:
+            raise ValueError('Pyamplitude Error: get_events:Wrong number of events')
         
         if segment_definitions is not None:
             params.append(('s', self._segments_definition_str(segment_definitions)))
