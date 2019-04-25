@@ -104,6 +104,10 @@ class AmplitudeRestApi(object):
 
         if segment_definitions is None:
             number_of_conditions = 1
+        elif len(segment_definitions) == 0:
+            number_of_conditions = 1
+        else:
+            number_of_conditions = len(segment_definitions)
 
         return number_of_conditions
 
@@ -210,14 +214,14 @@ class AmplitudeRestApi(object):
                 contains the average session length for each day.
         """
 
-        if segment_definitions is None and group_by is not None:
+        if (len(segment_definitions) == 0) and group_by is not None:
             raise ValueError('Pyamplitude Error: Segment_definition & group_by must be defined...')
 
         if not self._check_date_parameters(start=start, end=end):
            raise ValueError('Pyamplitude Error: Check start & end date parameters...')
 
         if m != 'new' and m != 'active':
-            message = 'Pyamplitude Error: get_active_and_new_user_count: + parameter: m must be "'"active"'"  or "'"new"'" '
+            error_message = 'Pyamplitude Error: get_active_and_new_user_count: + parameter: m must be "'"active"'"  or "'"new"'" '
             self.logger.error(error_message)
             raise ValueError(error_message)
 
