@@ -806,7 +806,7 @@ class AmplitudeRestApi(object):
                 raise ValueError(error_message)
             params.append(('rb', rb))
                 
-        if len(segment_definitions) == 0:
+        if len(segment_definitions) != 0:
             params.append(('s', self._segments_definition_str(segment_definitions)))
 
         if group_by is not None:
