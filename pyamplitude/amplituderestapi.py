@@ -740,6 +740,89 @@ class AmplitudeRestApi(object):
         api_response = self._make_request(url, params)
 
         return api_response
+    
+    def get_retention(self,
+                      se,
+                      re,
+                      start,
+                      end,
+                      rm='n-day',
+                      rb=None,
+                      interval='1',
+                      segment_definitions=[],
+                      group_by=None):
+        """ Get user retention for specific starting and returning actions.
+        Args:
+                se (required)	Event for the start action.
+                re (required)	Event for the returning action.
+                rm (optional)	The retention type: "bracket", "rolling", or "n-day".
+                Note that rolling implies unbounded retention (default: "n-day").
+                rb (optional, required if rm is "bracket")	The days within each bracket,
+                formatted [0,4] (e.g. if your bracket was Day 0 - Day 4,
+                the parameter value would be [0,5]).
+                start (required)	First date included in data series,
+                formatted YYYYMMDD (e.g. "20141001").
+                end (required)	Last date included in data series,
+                formatted YYYYMMDD (e.g. "20141004").
+                interval (optional)	Either 1, 7, or 30 for daily, weekly, and
+                monthly counts, respectively (default: 1).
+                segment_definitions (optional)	Segment definitions (default: none).
+                group_by (optional, up to 1)	The property to group by (default: none).
+        """
+
+        if (len(segment_definitions) == 0) and (group_by is not None):
+            raise ValueError('Pyamplitude Error: Segment_definition & group_by must be defined...')
+            
+        if not self._check_date_parameters(start=start,end=end):
+            raise ValueError('Pyamplitude Error: _check_date_parameters:Wrong date parameters...')
+            
+        if rm not in ["bracket", "rolling", "n-day"]:
+            error_message = 'Pyamplitude Error: get_retention: + parameter: rm must be "bracket", "rolling", or "n-day"'
+            self.logger.error(error_message)
+            raise ValueError(error_message)
+                
+        if interval not in [1,7,30]:
+            error_message = 'Pyamplitude Error: get_retention: + parameter: i must be Either 1, 7, or 30 for daily, weekly, and  monthly counts, respectively (default: 1)'
+            self.logger.error(error_message)
+            raise ValueError(error_message)
+            
+        self._validate_group_by_clause(segment_definitions, group_by)
+        self._validate_segments_definition(segment_definitions)
+            
+
+        endpoint = 'retention'
+        url = self.api_url + endpoint
+        
+        params = [('se', str(se)), ('re', str(re)), ('rm', rm), ('start', start), ('end', end), ('i', str(interval))]
+        
+        if rm == 'bracket':
+            error_message = None
+            if rb is None:
+                error_message = 'Pyamplitude Error: get_retention: + parameter: rb required for rm = "bracket"'
+            elif not isinstance(rb, (list,)):
+                error_message = 'Pyamplitude Error: get_retention: + parameter: rb must be of type list'
+            if error_message is not None:
+                self.logger.error(error_message)
+                raise ValueError(error_message)
+            params.append(('rb', rb))
+                
+        if len(segment_definitions) == 0:
+            params.append(('s', self._segments_definition_str(segment_definitions)))
+
+        if group_by is not None:
+            params.append(('g', str(group_by)))
+
+        if self.show_query_cost:
+            query_cost = self._calculate_query_cost(start_date = start,
+                                                    end_date   = end,
+                                                    endpoint   = endpoint,
+                                                    segment_definitions = segment_definitions)
+
+            print("Calculated query cost: " , query_cost)
+
+        api_response = self._make_request(url, params)
+
+        return api_response
 
     def get_annotations(self):
         """ Get the annotations configured in the app.
