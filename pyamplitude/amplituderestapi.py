@@ -6,7 +6,7 @@ import logging
 import sys
 import simplejson as json
 from datetime import datetime
-from pyamplitude.apiresources import Segment
+from pyamplitude.apiresources import Segment, Event
 
 
 class AmplitudeRestApi(object):
@@ -83,7 +83,7 @@ class AmplitudeRestApi(object):
         """ Calculates cost for the query type: Different chart types will have
         different costs. For all other endpoints not listed below, the cost is 1."""
 
-        endpoints_costs = {'segmentation':1, 'funnels':2,
+        endpoints_costs = {'events/segmentation':1, 'funnels':2,
                            'retention':8, 'users':4}
 
         if endpoint not in endpoints_costs.keys():
@@ -93,7 +93,7 @@ class AmplitudeRestApi(object):
 
         return endpoints_costs
 
-    def _calculate_number_of_conditions(self, segment_definitions):
+    def _calculate_number_of_conditions(self, segment_definitions, group_by=None):
         """ # of conditions: This is the number of segments + the number of
             conditions within the segments applied to the chart you are looking at.
             In addition, each group by will count as 4 segments. For example, the
@@ -104,14 +104,30 @@ class AmplitudeRestApi(object):
 
         if segment_definitions is None:
             number_of_conditions = 1
+        elif len(segment_definitions) == 0:
+            number_of_conditions = 1
+        else:
+            number_of_conditions = len(segment_definitions)
+            
+        if segment_definitions is not None:
+            for s in segment_definitions:
+                number_of_conditions += s.filter_count()
+                
+        if group_by is not None:
+            if isinstance(group_by, (list,)):
+                number_of_conditions += (4 * len(group_by))
+            else:
+                number_of_conditions += 4
 
         return number_of_conditions
 
-    def _make_request(self, url):
+    def _make_request(self, url, params=None):
         """ Each AmplitudeRestAPI method return data by using _make_request"""
         try:
-            response = requests.get(url, auth=(self.project_handler.api_key,
-                                               self.project_handler.secret_key))
+            response = requests.get(url,
+                                    params=params,
+                                    auth=(self.project_handler.api_key,
+                                          self.project_handler.secret_key))
 
             error_message = 'Pyamplitude Error: '  + str(response.text)
 
@@ -130,7 +146,7 @@ class AmplitudeRestApi(object):
     def _validate_group_by_clause(self, segment_definitions, group_by):
         """ Group by clause validation """
         if group_by is not None:
-            if segment_definitions == None:
+            if (segment_definitions == None) or (len(segment_definitions) == 0):
                 raise ValueError('Pyamplitude Error: Impossible to group by data without a segment definition')
             for prop in group_by:
                 valid = False
@@ -162,7 +178,8 @@ class AmplitudeRestApi(object):
                               start_date,
                               end_date,
                               endpoint,
-                              segment_definitions):
+                              segment_definitions,
+                              group_by = None):
         """ Calculate your query cost for each endpoint.
 
         The User Activity and User Search endpoints have a different concurrent
@@ -179,12 +196,17 @@ class AmplitudeRestApi(object):
         cost = (# of days) * (# of conditions) * (cost for the query type)
         """
         number_of_days       = self._calculate_number_of_days(start_date,end_date)
-        number_of_conditions = self._calculate_number_of_conditions(segment_definitions)
+        number_of_conditions = self._calculate_number_of_conditions(segment_definitions, group_by)
         cost_for_query_type  = self._calculate_cost_for_query_type(endpoint)
 
         total_query_cost = number_of_days * cost_for_query_type * number_of_conditions
 
         return total_query_cost
+    
+    def _segments_definition_str(self,
+                                 segment_definitions):
+        """Get str representation of segment definitions list """
+        return '[' + ', '.join([str(s)[1:-1] for s in segment_definitions]) + ']'
 
     def get_active_and_new_user_count(self,
                                       start,
@@ -203,14 +225,14 @@ class AmplitudeRestApi(object):
                 contains the average session length for each day.
         """
 
-        if segment_definitions is None and group_by is not None:
+        if (len(segment_definitions) == 0) and group_by is not None:
             raise ValueError('Pyamplitude Error: Segment_definition & group_by must be defined...')
 
         if not self._check_date_parameters(start=start, end=end):
            raise ValueError('Pyamplitude Error: Check start & end date parameters...')
 
         if m != 'new' and m != 'active':
-            message = 'Pyamplitude Error: get_active_and_new_user_count: + parameter: m must be "'"active"'"  or "'"new"'" '
+            error_message = 'Pyamplitude Error: get_active_and_new_user_count: + parameter: m must be "'"active"'"  or "'"new"'" '
             self.logger.error(error_message)
             raise ValueError(error_message)
 
@@ -228,20 +250,22 @@ class AmplitudeRestApi(object):
             query_cost = self._calculate_query_cost(start_date          = start,
                                                     end_date            = end,
                                                     endpoint            = endpoint,
-                                                    segment_definitions = segment_definitions)
+                                                    segment_definitions = segment_definitions,
+                                                    group_by            = group_by)
 
             print("Calculated query cost: " , query_cost)
 
-        url = self.api_url + endpoint + '?start=' + start + '&end=' + end + '&m=' + m + '&i=' + str(interval)
+        url = self.api_url + endpoint
+        params = [('start', start), ('end', end), ('m', m), ('i', str(interval))]
 
         if segment_definitions is not None:
-            url += '&s=' + str(segment_definitions)
+            params.append(('s', self._segments_definition_str(segment_definitions)))
 
         if group_by is not None:
             for prop in group_by:
-                url += '&g=' + str(prop)
+                params.append(('g', str(prop)))
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -261,8 +285,10 @@ class AmplitudeRestApi(object):
 
         endpoint = 'sessions'
 
-        url = self.api_url + endpoint + '/length' + '?start=' + start + '&end=' + end
+        url = self.api_url + endpoint + '/length'
+        params = [('start', start), ('end', end)]
 
+        
         if not self._check_date_parameters(start=start, end=end):
            raise ValueError('Pyamplitude Error: Check start & end date parameters...')
 
@@ -275,7 +301,7 @@ class AmplitudeRestApi(object):
 
             print("Calculated query cost: " , query_cost)
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -287,7 +313,8 @@ class AmplitudeRestApi(object):
 
         endpoint = 'sessions'
 
-        url = self.api_url + endpoint + '/average?start=' + start + '&end=' + end
+        url = self.api_url + endpoint + '/average'
+        params = [('start', start), ('end', end)]
 
         if not self._check_date_parameters(start=start,end=end):
            raise ValueError('Pyamplitude Error:  Wrong date parameters...')
@@ -300,7 +327,7 @@ class AmplitudeRestApi(object):
 
             print("Calculated query cost: " , query_cost)
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -310,7 +337,8 @@ class AmplitudeRestApi(object):
 
         endpoint = 'sessions'
 
-        url = self.api_url + endpoint + '/peruser?start=' + start + '&end=' + end
+        url = self.api_url + endpoint + '/peruser'
+        params = [('start', start), ('end', end)]
 
         if not self._check_date_parameters(start=start,end=end):
            raise ValueError('Pyamplitude Error:  Wrong date parameters...')
@@ -323,7 +351,7 @@ class AmplitudeRestApi(object):
 
             print("Calculated query cost: " , query_cost)
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -361,13 +389,12 @@ class AmplitudeRestApi(object):
             self.logger.exception('Pyamplitude Error: Bad defined property')
 
         endpoint = 'composition'
+        
+        url = self.api_url + endpoint
+        params = [('start', start), ('end', end)]
 
-        aux = 0
-        data = ''
         for x in proper:
-            data += '&p=' + x
-
-        url = self.api_url + endpoint + '?start=' + start + '&end=' + end + data
+            params.append(('p', x))
 
         if self.show_query_cost:
             query_cost = self._calculate_query_cost(start_date = start,
@@ -377,20 +404,21 @@ class AmplitudeRestApi(object):
 
             print("Calculated query cost: " , query_cost)
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
     def get_events(self,
                    start,
                    end,
-                   event_name=[],
+                   events=[],
                    mode='totals',
-                   interval='1'):
+                   interval='1',
+                   segment_definitions=[]):
         """ Get totals, uniques, averages, or DAU for multiple events at once.
 
         Args:
-                event_name (required, multiple)	Names of the events to retrieve data for.
+                events (required, multiple)	Events to retrieve data for (max 2).
 
                 mode (optional)	Either "totals", "uniques", "avg", or "pct_dau"
                 to get the desired metric (default: "totals").
@@ -408,31 +436,37 @@ class AmplitudeRestApi(object):
         if not self._check_date_parameters(start=start,end=end):
            raise ValueError('Pyamplitude Error: _check_date_parameters:Wrong date parameters...')
 
-        endpoint = 'events'
+        endpoint = 'events/segmentation'
         mode_options = ['totals','uniques','avg','pct_dau']
-
-        events = []
-        if len(event_name) == 1:
-            events = str(event_name[0]).replace(' ','%')
-        else:
-            for x in event_name:
-                events.append(str(x).replace(' ','%'))
 
         if mode not in mode_options:
             self.logger.warn('Pyamplitude Error: invalid option for m parameter, options: totals,paying,arpu,arppu')
 
-        url = self.api_url + endpoint + '?e=' + str(events) + '&start=' + start + '&end=' + end + '&m=' + mode + '&i=' + interval
+        url = self.api_url + endpoint
+        params = [('start', start), ('end', end), ('m', mode), ('i', str(interval))]
+        
+        if len(events) == 1:
+            params.append(('e', str(events[0])))
+        elif len(events) == 2:
+            params.append(('e', str(events[0])))
+            params.append(('e2', str(events[1])))                      
+        else:
+            raise ValueError('Pyamplitude Error: get_events:Wrong number of events')
+        
+        if segment_definitions is not None:
+            params.append(('s', self._segments_definition_str(segment_definitions)))
 
 
         if self.show_query_cost:
             query_cost = self._calculate_query_cost(start_date = start,
                                                     end_date   = end,
                                                     endpoint   = endpoint,
-                                                    segment_definitions = None)
+                                                    segment_definitions = segment_definitions)
+            query_cost = query_cost * len(events)
 
             print("Calculated query cost: " , query_cost)
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -494,9 +528,10 @@ class AmplitudeRestApi(object):
 
             print("Calculated query cost: " , query_cost)
 
-        url = self.api_url + endpoint + '?user=' + user
+        url = self.api_url + endpoint
+        params = [('user', user)]
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -516,9 +551,10 @@ class AmplitudeRestApi(object):
 
         endpoint = 'usersearch'
 
-        url = self.api_url + endpoint + '?user=' + user
+        url = self.api_url + endpoint
+        params = [('user', user)]
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -556,9 +592,10 @@ class AmplitudeRestApi(object):
 
             print("Calculated query cost: " , query_cost)
 
-        url = self.api_url + endpoint + '?i=' + str(interval)
+        url = self.api_url + endpoint
+        params = [('i', str(interval))]
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -618,21 +655,22 @@ class AmplitudeRestApi(object):
             query_cost = self._calculate_query_cost(start_date = start,
                                                     end_date   = end,
                                                     endpoint   = endpoint,
-                                                    segment_definitions = None)
+                                                    segment_definitions = None,
+                                                    group_by = group_by)
 
             print("Calculated query cost: " , query_cost)
 
-        url = self.api_url + endpoint + '/day' + '?m=' + m + '&start=' + start + '&end=' \
-        + end + '&i=' + str(interval)
+        url = self.api_url + endpoint + '/day'
+        params = [('start', start), ('end', end), ('m', m), ('i', str(interval))]
 
         if segment_definitions is not None:
-            url += '&s=' + str(segment_definitions)
+            params.append(('s', self._segments_definition_str(segment_definitions)))
 
         if group_by is not None:
             for prop in group_by:
-                url += '&g=' + str(prop)
+                params.append(('g', str(prop)))
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
 
         return api_response
 
@@ -688,7 +726,8 @@ class AmplitudeRestApi(object):
            query_cost = self._calculate_query_cost(start_date = start,
                                                    end_date   = end,
                                                    endpoint   = endpoint,
-                                                   segment_definitions = None)
+                                                   segment_definitions = None,
+                                                   group_by = group_by)
 
            print("Calculated query cost: ", query_cost)
 
@@ -703,18 +742,178 @@ class AmplitudeRestApi(object):
         self._validate_group_by_clause(segment_definitions, group_by)
         self._validate_segments_definition(segment_definitions)
 
-
-        url = self.api_url + endpoint + '/' + 'ltv?m=' + str(m) + '&start=' + start + '&end=' \
-        + end + '&i=' + str(interval)
+        url = self.api_url + endpoint + '/ltv'
+        params = [('start', start), ('end', end), ('m', m), ('i', str(interval))]
 
         if segment_definitions is not None:
-            url += '&s=' + str(segment_definitions)
+            params.append(('s', self._segments_definition_str(segment_definitions)))
 
         if group_by is not None:
             for prop in group_by:
-                url += '&g=' + str(prop)
+                params.append(('g', str(prop)))
 
-        api_response = self._make_request(url)
+        api_response = self._make_request(url, params)
+
+        return api_response
+    
+    def get_retention(self,
+                      se,
+                      re,
+                      start,
+                      end,
+                      rm='n-day',
+                      rb=None,
+                      interval='1',
+                      segment_definitions=[],
+                      group_by=None):
+        """ Get user retention for specific starting and returning actions.
+        Args:
+                se (required)	Event for the start action.
+                re (required)	Event for the returning action.
+                rm (optional)	The retention type: "bracket", "rolling", or "n-day".
+                Note that rolling implies unbounded retention (default: "n-day").
+                rb (optional, required if rm is "bracket")	The days within each bracket,
+                formatted [0,4] (e.g. if your bracket was Day 0 - Day 4,
+                the parameter value would be [0,5]).
+                start (required)	First date included in data series,
+                formatted YYYYMMDD (e.g. "20141001").
+                end (required)	Last date included in data series,
+                formatted YYYYMMDD (e.g. "20141004").
+                interval (optional)	Either 1, 7, or 30 for daily, weekly, and
+                monthly counts, respectively (default: 1).
+                segment_definitions (optional)	Segment definitions (default: none).
+                group_by (optional, up to 1)	The property to group by (default: none).
+        """
+
+        if (len(segment_definitions) == 0) and (group_by is not None):
+            raise ValueError('Pyamplitude Error: Segment_definition & group_by must be defined...')
+            
+        if not self._check_date_parameters(start=start,end=end):
+            raise ValueError('Pyamplitude Error: _check_date_parameters:Wrong date parameters...')
+            
+        if rm not in ["bracket", "rolling", "n-day"]:
+            error_message = 'Pyamplitude Error: get_retention: + parameter: rm must be "bracket", "rolling", or "n-day"'
+            self.logger.error(error_message)
+            raise ValueError(error_message)
+                
+        if interval not in [1,7,30]:
+            error_message = 'Pyamplitude Error: get_retention: + parameter: i must be Either 1, 7, or 30 for daily, weekly, and  monthly counts, respectively (default: 1)'
+            self.logger.error(error_message)
+            raise ValueError(error_message)
+            
+        self._validate_group_by_clause(segment_definitions, group_by)
+        self._validate_segments_definition(segment_definitions)
+            
+
+        endpoint = 'retention'
+        url = self.api_url + endpoint
+        
+        if rm == "n-day":
+            # n-day is the default method, and should not be set explicitly
+            params = [('se', str(se)), ('re', str(re)), ('start', start), ('end', end), ('i', str(interval))]
+        else:
+            params = [('se', str(se)), ('re', str(re)), ('rm', rm), ('start', start), ('end', end), ('i', str(interval))]
+        
+        if rm == 'bracket':
+            error_message = None
+            if rb is None:
+                error_message = 'Pyamplitude Error: get_retention: + parameter: rb required for rm = "bracket"'
+            elif not isinstance(rb, (list,)):
+                error_message = 'Pyamplitude Error: get_retention: + parameter: rb must be of type list'
+            if error_message is not None:
+                self.logger.error(error_message)
+                raise ValueError(error_message)
+            params.append(('rb', rb))
+                
+        if len(segment_definitions) != 0:
+            params.append(('s', self._segments_definition_str(segment_definitions)))
+
+        if group_by is not None:
+            params.append(('g', str(group_by)))
+
+        if self.show_query_cost:
+            query_cost = self._calculate_query_cost(start_date = start,
+                                                    end_date   = end,
+                                                    endpoint   = endpoint,
+                                                    segment_definitions = segment_definitions,
+                                                    group_by = group_by)
+
+            print("Calculated query cost: " , query_cost)
+
+        api_response = self._make_request(url, params)
+
+        return api_response
+    
+    def get_funnel(self,
+                   e,
+                   start,
+                   end,
+                   mode='ordered',
+                   n='active',
+                   segment_definitions=[],
+                   group_by=None,
+                   cs=2592000
+                  ):
+        """ Get funnel drop-off and conversion rates.
+        Args:
+                e (required, multiple)	A full event for each step in the funnel.
+                start (required)	First date included in data series,
+                formatted YYYYMMDD (e.g. "20141001").
+                end (required)	Last date included in data series,
+                formatted YYYYMMDD (e.g. "20141004").
+                mode (optional)	Either "unordered" or "ordered" to specify what
+                mode to run the funnel in (default: "ordered").
+                n (optional)	Either "new" or "active" to specify what set of
+                users to consider in the funnel (default: "active").
+                segment_definitions (optional)	Segment definitions (default: none).
+                group_by (optional, up to 1)	The property to group by (default: none).
+                cs (optional)	The conversion window in seconds (default: 2,592,000 -- 30 days).
+                Conversion windows are automatically rounded down to the nearest day in "unordered" mode.
+        """
+        
+        if (len(segment_definitions) == 0) and (group_by is not None):
+            raise ValueError('Pyamplitude Error: Segment_definition & group_by must be defined...')
+            
+        if not self._check_date_parameters(start=start,end=end):
+            raise ValueError('Pyamplitude Error: _check_date_parameters:Wrong date parameters...')
+            
+        if mode not in ["unordered", "ordered"]:
+            error_message = 'Pyamplitude Error: get_funnel: + parameter: mode must be "unordered" or "ordered"'
+            self.logger.error(error_message)
+            raise ValueError(error_message)
+            
+        if n not in ["new", "active"]:
+            error_message = 'Pyamplitude Error: get_funnel: + parameter: n must be "new" or "active"'
+            self.logger.error(error_message)
+            raise ValueError(error_message)
+        
+        self._validate_group_by_clause(segment_definitions, group_by)
+        self._validate_segments_definition(segment_definitions)
+        
+        endpoint = 'funnels'
+        url = self.api_url + endpoint
+        
+        params = [('start', start), ('end', end), ('mode', mode), ('n', n), ('cs', cs)]
+        for event in e:
+            params.append(('e', str(event)))
+        
+        if len(segment_definitions) != 0:
+            params.append(('s', self._segments_definition_str(segment_definitions)))
+
+        if group_by is not None:
+            params.append(('g', str(group_by)))
+
+        if self.show_query_cost:
+            query_cost = self._calculate_query_cost(start_date = start,
+                                                    end_date   = end,
+                                                    endpoint   = endpoint,
+                                                    segment_definitions = segment_definitions,
+                                                    group_by = group_by)
+            query_cost = query_cost * len(e)
+
+            print("Calculated query cost: " , query_cost)
+
+        api_response = self._make_request(url, params)
 
         return api_response
 
