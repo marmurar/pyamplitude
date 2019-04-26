@@ -808,7 +808,11 @@ class AmplitudeRestApi(object):
         endpoint = 'retention'
         url = self.api_url + endpoint
         
-        params = [('se', str(se)), ('re', str(re)), ('rm', rm), ('start', start), ('end', end), ('i', str(interval))]
+        if rm == "n-day":
+            # n-day is the default method, and should not be set explicitly
+            params = [('se', str(se)), ('re', str(re)), ('start', start), ('end', end), ('i', str(interval))]
+        else:
+            params = [('se', str(se)), ('re', str(re)), ('rm', rm), ('start', start), ('end', end), ('i', str(interval))]
         
         if rm == 'bracket':
             error_message = None
