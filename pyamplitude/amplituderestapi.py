@@ -420,7 +420,7 @@ class AmplitudeRestApi(object):
         Args:
                 events (required, multiple)	Events to retrieve data for (max 2).
 
-                mode (optional)	Either "totals", "uniques", "avg", or "pct_dau"
+                mode (optional)	Either "totals", "uniques", "average", or "pct_dau"
                 to get the desired metric (default: "totals").
 
                 start (required)	First date included in data series,
@@ -437,7 +437,7 @@ class AmplitudeRestApi(object):
            raise ValueError('Pyamplitude Error: _check_date_parameters:Wrong date parameters...')
 
         endpoint = 'events/segmentation'
-        mode_options = ['totals','uniques','avg','pct_dau']
+        mode_options = ['totals','uniques','average','pct_dau']
 
         if mode not in mode_options:
             self.logger.warn('Pyamplitude Error: invalid option for m parameter, options: totals,paying,arpu,arppu')
