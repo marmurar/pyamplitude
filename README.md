@@ -42,9 +42,10 @@ Lets instance the ProjectHanlder with our first app called 'BubbleWay'...
 
 
 ```python
-bubbleConector = ProjectsHandler(project_name = 'BubbleWay',
-                                 api_key      = <'API-KEY'>,
-                                 api_secret   = <'API-SECRET'>)
+
+bubbleConector = ProjectsHandler(project_name='BubbleWay',
+				 api_key='<api_key>',
+				 secret_key='<secret_key>')
 ```
 
 Hint: Use the __repr__ method to check your actual instance when used with several apps.
