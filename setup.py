@@ -1,13 +1,5 @@
-from distutils.core import setup
-from codecs import open
 from os import path
-from setuptools import find_packages
-
-setup(
-    name='pyamplitude',
-    version='1.2.0.dev1',
-    packages=['pyamplitude']
-)
+from setuptools import setup, find_packages
 
 here = path.abspath(path.dirname(__file__))
 
