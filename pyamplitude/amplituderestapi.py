@@ -203,10 +203,10 @@ class AmplitudeRestApi(object):
 
         return total_query_cost
     
-    def _segments_definition_str(self,
-                                 segment_definitions):
-        """Get str representation of segment definitions list """
-        return '[' + ', '.join([str(s)[1:-1] for s in segment_definitions]) + ']'
+    def _segment_definition_str(self,
+                                 segment_definition):
+        """Get str representation of a segment definition"""
+        return str(segment_definition)
 
     def get_active_and_new_user_count(self,
                                       start,
@@ -259,7 +259,8 @@ class AmplitudeRestApi(object):
         params = [('start', start), ('end', end), ('m', m), ('i', str(interval))]
 
         if segment_definitions is not None:
-            params.append(('s', self._segments_definition_str(segment_definitions)))
+            for segment_definition in segment_definitions:
+                params.append(('s', self._segment_definition_str(segment_definition)))
 
         if group_by is not None:
             for prop in group_by:
@@ -420,7 +421,7 @@ class AmplitudeRestApi(object):
         Args:
                 events (required, multiple)	Events to retrieve data for (max 2).
 
-                mode (optional)	Either "totals", "uniques", "avg", or "pct_dau"
+                mode (optional)	Either "totals", "uniques", "average", or "pct_dau"
                 to get the desired metric (default: "totals").
 
                 start (required)	First date included in data series,
@@ -437,7 +438,7 @@ class AmplitudeRestApi(object):
            raise ValueError('Pyamplitude Error: _check_date_parameters:Wrong date parameters...')
 
         endpoint = 'events/segmentation'
-        mode_options = ['totals','uniques','avg','pct_dau']
+        mode_options = ['totals','uniques','average','pct_dau']
 
         if mode not in mode_options:
             self.logger.warn('Pyamplitude Error: invalid option for m parameter, options: totals,paying,arpu,arppu')
@@ -454,7 +455,8 @@ class AmplitudeRestApi(object):
             raise ValueError('Pyamplitude Error: get_events:Wrong number of events')
         
         if segment_definitions is not None:
-            params.append(('s', self._segments_definition_str(segment_definitions)))
+            for segment_definition in segment_definitions:
+                params.append(('s', self._segment_definition_str(segment_definition)))
 
 
         if self.show_query_cost:
@@ -664,7 +666,8 @@ class AmplitudeRestApi(object):
         params = [('start', start), ('end', end), ('m', m), ('i', str(interval))]
 
         if segment_definitions is not None:
-            params.append(('s', self._segments_definition_str(segment_definitions)))
+            for segment_definition in segment_definitions:
+                params.append(('s', self._segment_definition_str(segment_definition)))
 
         if group_by is not None:
             for prop in group_by:
@@ -746,7 +749,8 @@ class AmplitudeRestApi(object):
         params = [('start', start), ('end', end), ('m', m), ('i', str(interval))]
 
         if segment_definitions is not None:
-            params.append(('s', self._segments_definition_str(segment_definitions)))
+            for segment_definition in segment_definitions:
+                params.append(('s', self._segment_definition_str(segment_definition)))
 
         if group_by is not None:
             for prop in group_by:
@@ -826,7 +830,8 @@ class AmplitudeRestApi(object):
             params.append(('rb', rb))
                 
         if len(segment_definitions) != 0:
-            params.append(('s', self._segments_definition_str(segment_definitions)))
+            for segment_definition in segment_definitions:
+                params.append(('s', self._segment_definition_str(segment_definition)))
 
         if group_by is not None:
             params.append(('g', str(group_by)))
@@ -898,7 +903,8 @@ class AmplitudeRestApi(object):
             params.append(('e', str(event)))
         
         if len(segment_definitions) != 0:
-            params.append(('s', self._segments_definition_str(segment_definitions)))
+            for segment_definition in segment_definitions:
+                params.append(('s', self._segment_definition_str(segment_definition)))
 
         if group_by is not None:
             params.append(('g', str(group_by)))
