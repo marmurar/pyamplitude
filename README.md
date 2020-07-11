@@ -27,7 +27,9 @@ Aditional Features:
 
 ## Install
 
-sudo pip install pyamplitude
+```python
+pip install pyamplitude
+```
 
 ## How to use PyAmplitude ?
 
