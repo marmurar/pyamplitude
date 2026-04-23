@@ -31,6 +31,22 @@ Run tests with coverage:
 
    python -m pytest
 
+The local coverage gate is configured in ``pyproject.toml`` and currently
+requires at least 95% total coverage. The generated ``coverage.xml`` file is what
+the GitHub Actions workflow uploads to Codecov.
+
+Run only the Sphinx documentation build:
+
+.. code-block:: bash
+
+   python -m sphinx -b html docs/source docs/_build/html
+
+Run a package build locally:
+
+.. code-block:: bash
+
+   python -m build --no-isolation
+
 Integration tests should be marked explicitly:
 
 .. code-block:: python
@@ -52,3 +68,10 @@ Expected optional variables:
 * ``AMPLITUDE_API_KEY``
 * ``AMPLITUDE_SECRET_KEY``
 * ``AMPLITUDE_PROJECT_ID``
+
+CI and Codecov
+--------------
+
+The CI workflow runs tests on Python 3.9, 3.10, 3.11 and 3.12. The Python 3.12
+job uploads coverage to Codecov. Sphinx is built in a separate docs job so API
+reference generation fails fast when public objects or imports break.

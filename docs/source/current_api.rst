@@ -50,7 +50,8 @@ HTTP V2 API
 -----------
 
 ``HTTPV2Client`` uploads one or more event payloads with ``api_key`` in the JSON
-body. The ``identify()`` helper sends an ``$identify`` event.
+body. The ``identify()`` helper sends an ``$identify`` event. Request payloads
+are built from ``AmplitudeEvent`` and optional ``UploadOptions`` objects.
 
 Official reference:
 https://amplitude.com/docs/apis/analytics/http-v2
@@ -58,7 +59,9 @@ https://amplitude.com/docs/apis/analytics/http-v2
 Batch Event Upload API
 ----------------------
 
-``BatchClient`` uses the Batch endpoint and the same event model as HTTP V2.
+``BatchClient`` uses the Batch endpoint and the same event model as HTTP V2. It
+is intended for higher-volume server-side ingestion and accepts the same
+``UploadOptions`` structure.
 
 Official reference:
 https://amplitude.com/docs/apis/analytics/batch-event-upload
@@ -68,3 +71,18 @@ Regions
 
 The clients support ``region="US"`` and ``region="EU"``. EU endpoints use
 Amplitude's EU domains for ingestion and analytics APIs.
+
+Compatibility Surface
+---------------------
+
+The following legacy imports remain available as wrappers:
+
+* ``pyamplitude.amplituderestapi.AmplitudeRestApi``
+* ``pyamplitude.behavioralcohortsapi.BehavioralCohortsApi``
+* ``pyamplitude.exportapi.AmplitudeExportApi``
+* ``pyamplitude.projectshandler.ProjectsHandler``
+* ``pyamplitude.apiresources.Segment``
+* ``pyamplitude.apiresources.Event``
+
+New code should prefer the newer client names, because they map directly to API
+families and expose the offline-testable transport hook.

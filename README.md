@@ -2,6 +2,12 @@
 
 # PyAmplitude
 
+[![CI](https://github.com/marmurar/pyamplitude/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/marmurar/pyamplitude/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/marmurar/pyamplitude/branch/develop/graph/badge.svg)](https://codecov.io/gh/marmurar/pyamplitude)
+[![PyPI version](https://img.shields.io/pypi/v/pyamplitude.svg)](https://pypi.org/project/pyamplitude/)
+[![Python versions](https://img.shields.io/pypi/pyversions/pyamplitude.svg)](https://pypi.org/project/pyamplitude/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.txt)
+
 `pyamplitude` is a modern, offline-testable Python client for Amplitude Analytics APIs.
 
 This rewrite targets the current Amplitude API families instead of the legacy 2017
@@ -162,6 +168,9 @@ Sphinx documentation lives in `docs/source`.
 ```bash
 python -m sphinx -b html docs/source docs/_build/html
 ```
+
+Project status badges in this README and the Sphinx documentation track the
+`develop` branch until a release branch is promoted.
 
 Current Amplitude API references:
 

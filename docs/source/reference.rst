@@ -4,6 +4,14 @@ API Reference
 Clients
 -------
 
+Core client and transport primitives:
+
+.. automodule:: pyamplitude.client
+   :members:
+
+.. automodule:: pyamplitude.transport
+   :members:
+
 .. automodule:: pyamplitude.dashboard
    :members:
 
@@ -29,6 +37,11 @@ Configuration
    :members:
 
 .. automodule:: pyamplitude.regions
+   :members:
+
+Public package exports:
+
+.. automodule:: pyamplitude
    :members:
 
 Errors
