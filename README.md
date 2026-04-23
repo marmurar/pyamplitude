@@ -1,3 +1,5 @@
+![PyAmplitude logo](logo.png)
+
 # PyAmplitude
 
 `pyamplitude` is a modern, offline-testable Python client for Amplitude Analytics APIs.
