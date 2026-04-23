@@ -16,6 +16,9 @@ Badges
    * - Codecov
      - Publishes coverage from ``coverage.xml`` and enforces project/patch targets.
      - https://codecov.io/gh/marmurar/pyamplitude
+   * - GitHub release
+     - Shows the latest repository release tag.
+     - https://github.com/marmurar/pyamplitude/releases
    * - PyPI version
      - Shows the latest published package version.
      - https://pypi.org/project/pyamplitude/
@@ -31,6 +34,8 @@ Branches
 
 The active development branch is ``develop``. The ``master`` branch should only
 be updated intentionally when changes are ready to promote.
+
+Release tags use the ``vX.Y.Z`` format, for example ``v2.0.0``.
 
 Codecov
 -------
@@ -50,5 +55,13 @@ The local test command also enforces 95% total coverage:
 CI Workflow
 -----------
 
-The workflow runs on pushes to ``develop``, ``master`` and ``main``, and on pull
-requests. It tests Python 3.9 through 3.12 and builds the Sphinx documentation.
+The workflow runs on pushes to ``develop``, ``master``, ``main`` and ``v*`` tags,
+and on pull requests. It tests Python 3.9 through 3.12 and builds the Sphinx
+documentation.
+
+Publishing
+----------
+
+The ``Publish`` workflow builds distributions and uploads them to PyPI through
+Trusted Publishing when a GitHub Release is published. Manual Twine publishing is
+also supported; in both cases ``twine check dist/*`` should pass before upload.

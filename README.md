@@ -1,9 +1,10 @@
-![PyAmplitude logo](logo.png)
+![PyAmplitude logo](https://raw.githubusercontent.com/marmurar/pyamplitude/v2.0.0/logo.png)
 
 # PyAmplitude
 
 [![CI](https://github.com/marmurar/pyamplitude/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/marmurar/pyamplitude/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/marmurar/pyamplitude/branch/develop/graph/badge.svg)](https://codecov.io/gh/marmurar/pyamplitude)
+[![GitHub release](https://img.shields.io/github/v/release/marmurar/pyamplitude?sort=semver)](https://github.com/marmurar/pyamplitude/releases)
 [![PyPI version](https://img.shields.io/pypi/v/pyamplitude.svg)](https://pypi.org/project/pyamplitude/)
 [![Python versions](https://img.shields.io/pypi/pyversions/pyamplitude.svg)](https://pypi.org/project/pyamplitude/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.txt)
@@ -171,6 +172,9 @@ python -m sphinx -b html docs/source docs/_build/html
 
 Project status badges in this README and the Sphinx documentation track the
 `develop` branch until a release branch is promoted.
+
+Release builds use semantic version tags such as `v2.0.0`. The PyPI long
+description is sourced from this README through `pyproject.toml`.
 
 Current Amplitude API references:
 

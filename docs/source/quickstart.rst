@@ -20,6 +20,13 @@ Build the Sphinx documentation:
 
    python -m sphinx -b html docs/source docs/_build/html
 
+Validate release distributions:
+
+.. code-block:: bash
+
+   python -m build --no-isolation
+   python -m twine check dist/*
+
 Create credentials for Basic Auth APIs:
 
 .. code-block:: python

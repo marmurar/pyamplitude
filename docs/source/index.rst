@@ -9,6 +9,10 @@ PyAmplitude
    :target: https://codecov.io/gh/marmurar/pyamplitude
    :alt: Codecov coverage
 
+.. image:: https://img.shields.io/github/v/release/marmurar/pyamplitude?sort=semver
+   :target: https://github.com/marmurar/pyamplitude/releases
+   :alt: GitHub release
+
 .. image:: https://img.shields.io/pypi/v/pyamplitude.svg
    :target: https://pypi.org/project/pyamplitude/
    :alt: PyPI version
@@ -33,6 +37,7 @@ HTTP V2 ingestion, Batch uploads and optional Redshift helper queries.
 
    quickstart
    status
+   release
    current_api
    offline_testing
    reference
