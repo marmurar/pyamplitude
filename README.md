@@ -1,167 +1,170 @@
-
-![alt text](logo.png)
-
 # PyAmplitude
 
-...What is Pyamplitude ?
+`pyamplitude` is a modern, offline-testable Python client for Amplitude Analytics APIs.
 
-Amplitude its a python-based client designed to interact with the entire set of Amplitude Analytics services (Redshift, Export API, Dashboard Rest API and Behavioral Cohorts API) following the official Amplitude Documentation which can be found at:  
+This rewrite targets the current Amplitude API families instead of the legacy 2017
+Dashboard-only surface:
 
-https://amplitude.zendesk.com/hc/en-us/categories/115000290488-Technical-Resources
+- Dashboard REST API
+- Export API
+- Behavioral Cohorts API, including asynchronous cohort export requests
+- HTTP V2 ingestion API
+- Batch Event Upload API
+- Optional Redshift helpers for historical Amplitude exports
 
-General Organization:
+The package is designed to be tested without real Amplitude credentials. Every
+client accepts an injectable transport, so unit tests can validate URLs, auth,
+query parameters, JSON payloads, response parsing and error handling locally.
 
-     AmplitudeRestApi   -> A wrapper around each Rest API resources.
-     RedshfitAmplitude  -> A sql connector for the Amplitude AWS-Redshift database.
-     ExportApi          -> A wrapper around the entire Amplitude export
+## Installation
 
-Aditional Modules:
-
-    Resources      -> Api resources ( Manage several apps & secret keys, import Segments to get data using Segment definitions )
-
-Aditional Features:
-
-    - Calculate each query cost.
-    - Manage your query rate limits in a ETL context.
-    - Visualize the quentity of requests and your query limit status.
-
-## Install
-
-```python
+```bash
 pip install pyamplitude
 ```
 
-## How to use PyAmplitude ?
+For local development:
 
-Let's start by importing the ProjectHandler and passing a project_name, api_key and api_secret key as parameters.
-
-
-```python
-from pyamplitude.projectshandler import ProjectsHandler
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest
 ```
 
-Lets instance the ProjectHanlder with our first app called 'BubbleWay'...
+For optional Redshift support:
 
-
-```python
-
-bubbleConector = ProjectsHandler(project_name='BubbleWay',
-				 api_key='<api_key>',
-				 secret_key='<secret_key>')
+```bash
+python -m pip install "pyamplitude[redshift]"
 ```
 
-Hint: Use the __repr__ method to check your actual instance when used with several apps.
+## Credentials
 
+Dashboard, Export and Behavioral Cohorts use Basic Auth with an API key and secret key:
 
 ```python
-print bubbleConector
+from pyamplitude import AmplitudeCredentials
+
+credentials = AmplitudeCredentials(
+    api_key="AMPLITUDE_API_KEY",
+    secret_key="AMPLITUDE_SECRET_KEY",
+    project_name="production",
+)
 ```
 
-project_name: BubbleWay | api_key: API-KEY | secret_key: API-SECRET
+HTTP V2 and Batch ingestion only require the API key:
 
+```python
+from pyamplitude.ingestion import make_ingestion_credentials
+
+credentials = make_ingestion_credentials("AMPLITUDE_API_KEY")
+```
+
+US and EU regions are supported:
+
+```python
+from pyamplitude import BatchClient
+
+client = BatchClient(credentials, region="EU")
+```
+
+## Ingest Events
+
+```python
+from pyamplitude import AmplitudeEvent, HTTPV2Client
+from pyamplitude.ingestion import make_ingestion_credentials
+
+client = HTTPV2Client(make_ingestion_credentials("AMPLITUDE_API_KEY"))
+
+client.upload([
+    AmplitudeEvent(
+        event_type="Signup",
+        user_id="user-123",
+        event_properties={"source": "docs"},
+        insert_id="signup-user-123",
+    )
+])
+```
+
+## Query Dashboard Charts
+
+```python
+from pyamplitude import AmplitudeCredentials, DashboardClient, Segment
+
+credentials = AmplitudeCredentials(api_key="key", secret_key="secret")
+client = DashboardClient(credentials)
+
+segment = Segment.user_property("country", "is", ["Uruguay"])
+
+data = client.active_users(
+    start="20240101",
+    end="20240131",
+    mode="active",
+    interval=1,
+    segments=[segment],
+    group_by="country",
+)
+```
+
+## Export Events
+
+```python
+from pyamplitude import AmplitudeCredentials, ExportClient
+
+client = ExportClient(AmplitudeCredentials(api_key="key", secret_key="secret"))
+events = client.export_events(start="20240101T00", end="20240101T23")
+```
+
+## Behavioral Cohorts
+
+```python
+from pyamplitude import AmplitudeCredentials, CohortsClient
+
+client = CohortsClient(AmplitudeCredentials(api_key="key", secret_key="secret"))
+
+job = client.request_cohort("cohort-id", include_properties=True)
+status = client.request_status(job["request_id"])
+archive = client.download_cohort(job["request_id"])
+```
+
+## Compatibility Imports
+
+The old import paths still exist as wrappers:
 
 ```python
 from pyamplitude.amplituderestapi import AmplitudeRestApi
+from pyamplitude.behavioralcohortsapi import BehavioralCohortsApi
+from pyamplitude.exportapi import AmplitudeExportApi
+from pyamplitude.projectshandler import ProjectsHandler
 ```
 
-# Querying data from the Amplitude Analytics REST API Dashboard
+New code should prefer `DashboardClient`, `CohortsClient`, `ExportClient`,
+`HTTPV2Client` and `BatchClient`.
 
-Great ! So let's use the Amplitude Rest Api to query some useful data for later analysis...
+## Testing Without API Keys
 
+The project does not require real Amplitude credentials for normal test runs.
 
-```python
-apiconector = AmplitudeRestApi(project_handler = bubbleConector,
-                               show_logs       = False,
-                               show_query_cost = False)
+```bash
+python -m pytest
 ```
 
-### Creating and using segments
+Integration tests should be marked with `@pytest.mark.integration` and skipped unless
+these environment variables exist:
 
-Segments are represented as JSON arrays, where each element is a JSON object corresponding to a filter condition. First import and initialize the Segment class and add each query filter. in these cases we will be creating two segment definitions and for later use.
+- `AMPLITUDE_API_KEY`
+- `AMPLITUDE_SECRET_KEY`
+- `AMPLITUDE_PROJECT_ID`
 
-first_segment_definition = Segment()
+## Documentation
 
-first_segment_definition.add_filter(prop='country',op='is',values=['argentina','brasil'])
+Sphinx documentation lives in `docs/source`.
 
-second_segment_definition = Segment()
-
-second_segment_definition.add_filter(prop='country',op='is',values=['argentina','paraguay'])
-
-### Using the AmplitudeRestApi module.
-
-##### First Example:  Querying Active and New Users count
-
-
-```python
-data = apiconector.get_active_and_new_user_count(start    = '20170814',
-                                                 end      = '20170825',
-                                                 m        = 'active',
-                                                 interval = 1,
-                                                 segment_definitions = [first_segment_definition,
-                                                                        second_segment_definition],
-                                                 group_by            = None)
-```
-```python
-
-If all goes well... you should receive a JSON response such as:
-
-{
-    "data": {
-        "series": [
-                    [18600,15294,14164,12945,12585,11797,10113,9523,8321,7873,9053,8109],
-                    [3264,3423,3397,2984,2916,2827,2918,2934,1800,1560,1240,1100]
-        ],
-        "seriesMeta": ["Argentina", "Brasil"],
-        "xValues": ["2017-08-14", "2017-08-15", "2017-08-16", "2017-08-17", "2017-08-18", "2017-08-19", "2017-08-20",
-                    "2017-08-21", "2017-08-22", "2017-08-23", "2017-08-24", "2017-08-25"]
-    }
-}
+```bash
+python -m sphinx -b html docs/source docs/_build/html
 ```
 
-Other Resources: Session Length Distribution, Average Session Length, Average Sessions per User, User Composition, Events, Events List, Event Segmentation, Funnel Analysis, Retention Analysis, User Activity, User Search, Real-time Active Users, Revenue Analysis, Revenue LTV, Annotations...
+Current Amplitude API references:
 
-## Aditional options
-
-#### Using  calculate_query_cost = True parameter
-
-With PyAmplitude you can calculate each query cost very easily by checking the show_query_cost parameter. In an ETL context you may use this option not to exceed query limits. If you want to know more about how each query cost is being calculated, please read:
-
-https://amplitude.zendesk.com/hc/en-us/articles/205469748-Dashboard-Rest-API-Export-Amplitude-Dashboard-Data#request-limits
-
-
-# Fetching data from Amplitude Redshift
-
-As a addition you can query data from Amplitude Redshift using the AmplitudeReshift module.
-
-
-```python
-from pyamplitude.amplituderestshift import AmplitudeRedshift
-```
-
-
-```python
-ConnectionHandler = AmplitudeRedshift(host='',
-                                      user='BubbleUser',
-                                      port='5439',
-                                      password=<yourpassword>,
-                                      dbname='bubble_db',
-                                      schema= 'app123098',
-                                      table=<db_table>,
-                                      show_logs= True)
-```
-
-
-```python
-query = 'SELECT * FROM app123098.bubble_db LIMIT 10'
-```
-
-
-```python
-ConnectionHandler.execute_query(query=query)
-```
-
-NOTE: AmplitudeRedshift has a serious of prebuild methods to fetch a list of users, query user events as well as new users, but you can also pass your specific query using the execute_query method.
-
-## Authors
-
-Marcos Manuel Muraro
+- https://www.docs.developers.amplitude.com/analytics/apis/dashboard-rest-api/
+- https://amplitude.com/docs/apis/analytics/export
+- https://amplitude.com/docs/apis/analytics/behavioral-cohorts
+- https://amplitude.com/docs/apis/analytics/http-v2
+- https://amplitude.com/docs/apis/analytics/batch-event-upload

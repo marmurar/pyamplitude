@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyamplitude"
+version = "2.0.0"
+description = "Offline-testable Python client for Amplitude Analytics APIs"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [{ name = "Marcos Manuel Muraro", email = "mmmuraro@gmail.com" }]
+keywords = ["amplitude", "analytics", "events", "cohorts", "export"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = ["requests>=2.31"]
+
+[project.optional-dependencies]
+redshift = ["psycopg2-binary>=2.9"]
+dev = [
+  "pytest>=8",
+  "pytest-cov>=5",
+  "sphinx>=7",
+]
+docs = ["sphinx>=7"]
+
+[project.urls]
+Homepage = "https://github.com/marmurar/pyamplitude"
+Repository = "https://github.com/marmurar/pyamplitude"
+Issues = "https://github.com/marmurar/pyamplitude/issues"
+
+[tool.setuptools.packages.find]
+include = ["pyamplitude*"]
+exclude = ["pyamplitude.tests*", "tests*", "docs*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+  "--strict-markers",
+  "--cov=pyamplitude",
+  "--cov-report=term-missing",
+  "--cov-report=xml",
+  "--cov-fail-under=95",
+]
+markers = [
+  "integration: tests that require real Amplitude credentials",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["pyamplitude"]
+omit = [
+  "pyamplitude/tutorial/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

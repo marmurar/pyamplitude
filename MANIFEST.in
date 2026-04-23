@@ -1,0 +1,7 @@
+include LICENSE.txt
+include README.md
+include pyproject.toml
+include codecov.yml
+recursive-include tests *.py
+recursive-include docs/source *.py *.rst
+recursive-include .github/workflows *.yml
