@@ -9,9 +9,9 @@ PyAmplitude
    :target: https://codecov.io/gh/marmurar/pyamplitude
    :alt: Codecov coverage
 
-.. image:: https://img.shields.io/github/v/release/marmurar/pyamplitude?sort=semver
-   :target: https://github.com/marmurar/pyamplitude/releases
-   :alt: GitHub release
+.. image:: https://img.shields.io/github/v/tag/marmurar/pyamplitude?sort=semver
+   :target: https://github.com/marmurar/pyamplitude/tags
+   :alt: Git tag
 
 .. image:: https://img.shields.io/pypi/v/pyamplitude.svg
    :target: https://pypi.org/project/pyamplitude/

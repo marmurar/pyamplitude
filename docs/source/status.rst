@@ -16,9 +16,9 @@ Badges
    * - Codecov
      - Publishes coverage from ``coverage.xml`` and enforces project/patch targets.
      - https://codecov.io/gh/marmurar/pyamplitude
-   * - GitHub release
-     - Shows the latest repository release tag.
-     - https://github.com/marmurar/pyamplitude/releases
+   * - Git tag
+     - Shows the latest repository tag, even when there is no GitHub Release object.
+     - https://github.com/marmurar/pyamplitude/tags
    * - PyPI version
      - Shows the latest published package version.
      - https://pypi.org/project/pyamplitude/
