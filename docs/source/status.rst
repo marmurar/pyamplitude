@@ -22,6 +22,9 @@ Badges
    * - PyPI version
      - Shows the latest published package version.
      - https://pypi.org/project/pyamplitude/
+   * - PyPI downloads
+     - Shows monthly package downloads from PyPI.
+     - https://pypi.org/project/pyamplitude/
    * - Python versions
      - Shows supported Python versions from package metadata.
      - https://pypi.org/project/pyamplitude/

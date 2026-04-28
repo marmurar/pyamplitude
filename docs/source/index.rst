@@ -17,6 +17,10 @@ PyAmplitude
    :target: https://pypi.org/project/pyamplitude/
    :alt: PyPI version
 
+.. image:: https://img.shields.io/pypi/dm/pyamplitude.svg
+   :target: https://pypi.org/project/pyamplitude/
+   :alt: PyPI downloads per month
+
 .. image:: https://img.shields.io/pypi/pyversions/pyamplitude.svg
    :target: https://pypi.org/project/pyamplitude/
    :alt: Supported Python versions
