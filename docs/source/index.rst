@@ -40,6 +40,7 @@ HTTP V2 ingestion, Batch uploads and optional Redshift helper queries.
    :caption: Contents
 
    quickstart
+   ai_enablement
    status
    release
    current_api

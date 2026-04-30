@@ -1,0 +1,11 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyamplitude-mcp"
+version = "0.1.0"
+description = "Starter MCP server for pyamplitude repository context"
+requires-python = ">=3.9"
+dependencies = ["mcp>=1.2.0"]
+
